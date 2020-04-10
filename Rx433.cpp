@@ -69,11 +69,6 @@ void ICACHE_RAM_ATTR rxISR() {
   // Need to invert as p represents state before transition.
   Pulse p = {now, now-last_changed, digitalRead(rxPin_)};
   if (pulse_stream.empty() && IsSync(p)) {
-    // if (now - last_sync_us > 10000) {
-    //   // Wait for next message.
-    //   last_sync_us = now;
-    //   return;
-    // }
     sync_pulse_us = p.delta_us;
     pulse_stream.push_back(p);
   } else if (p.delta_us * 4 > 3 * sync_pulse_us) {
