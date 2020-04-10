@@ -10,7 +10,7 @@ class MyHandler : public rx433::Handler {
     // Return true if this is (possibly) a sync pulse.
   }
   
-  bool Handle(const std::vector<Pulse>& buf) {
+  bool Handle(const std::vector<rx433::Pulse>& buf) override {
     // Insert demodulation code here. Return true if successful.
   }
 }
