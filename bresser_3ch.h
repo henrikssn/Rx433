@@ -12,7 +12,7 @@ namespace rx433 {
 
 class Bresser3chHandler : public Handler {
  public:
-  Bresser3chHandler(PubSubClient& client, const char* topic) : mqtt_client_(&client), sensor_topic_(topic) {}
+  Bresser3chHandler(PubSubClient* client, const char* topic) : mqtt_client_(client), sensor_topic_(topic) {}
   bool IsSync(const Pulse& p) override;
   bool Handle(const std::vector<Pulse>& buf) override;
  private:
