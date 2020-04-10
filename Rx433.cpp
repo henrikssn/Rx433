@@ -8,6 +8,12 @@ namespace {
   using namespace rx433_internal;
 }
 
+bool Pulse::operator==(const Pulse& other) const {
+  return time_us == other.time_us
+      && delta_us == other.delta_us
+      && state == other.state;
+}
+
 void AddHandler(Handler* handler) {
   handlers.push_back(handler);
 }
@@ -67,7 +73,9 @@ void ICACHE_RAM_ATTR rxISR() {
   if (pulse_stream_queue.size() > 10) return;
   int now = micros();
   // Need to invert as p represents state before transition.
-  Pulse p = {now, now-last_changed, digitalRead(rxPin_)};
+  Pulse p = {static_cast<uint32_t>(now),
+             static_cast<uint32_t>(now-last_changed),
+             static_cast<bool>(digitalRead(rxPin_))};
   if (pulse_stream.empty() && IsSync(p)) {
     // if (now - last_sync_us > 10000) {
     //   // Wait for next message.

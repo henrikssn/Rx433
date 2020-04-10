@@ -23,6 +23,7 @@ struct Pulse {
   uint32_t time_us, delta_us;
   // state is true iff the pin was high.
   bool state;
+ bool operator==(const Pulse&) const;
 };
 
 // Handler should be implemented by a class that supports a specific
