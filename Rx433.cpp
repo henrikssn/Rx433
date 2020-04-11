@@ -14,6 +14,7 @@ void AddHandler(Handler* handler) {
 
 void Setup(int rxPin) {
   rxPin_ = rxPin;
+  pinMode(rxPin, INPUT);
   attachInterrupt(rxPin, rxISR, CHANGE);
 }
 
@@ -39,7 +40,6 @@ bool ICACHE_RAM_ATTR IsSync(const Pulse& p) {
 }
 
 bool Handle(std::vector<Pulse> buf) {
-  buf = FilterGlitches(buf);
 #ifdef DEBUG_PRINT_PULSES
   Serial.printf("Pulse length: %d, sync pulse %d: %dus\n",
                 buf.size(), buf[0].state, buf[0].delta_us);
@@ -62,62 +62,57 @@ bool Handle(std::vector<Pulse> buf) {
 
 void ICACHE_RAM_ATTR rxISR() {
   static int last_changed = 0, sync_pulse_us = 0;
+  static int last_state = 0;
   static std::vector<rx433::Pulse> pulse_stream;
-  bool pulse_stream_done = false;
-  if (pulse_stream_queue.size() > 10) return;
   int now = micros();
+  int state = digitalRead(rxPin_);
+  int delta_us = now - last_changed;
+
+  // Ignore very short glitches that we missed.
+  if (state == last_state) return;
+  last_state = state;
+
+  // Streamed glich filter
+  // Ignore any pulse (1 or 0) shorter than kGlitchUs.
+  if (!pulse_stream.empty() && delta_us < kGlitchUs) {
+    last_changed -= pulse_stream.back().delta_us;
+    pulse_stream.pop_back();
+    return;
+  }
+  last_changed = now;
+
+  // Queue is full, drop pulse
+  if (pulse_stream_queue.size() > 10) return;
+
+  // Create pulse
   // Need to invert as p represents state before transition.
-  Pulse p = {now, now-last_changed, digitalRead(rxPin_)};
+  Pulse p = {now, delta_us, state};
+
+  bool pulse_stream_done = false;
   if (pulse_stream.empty() && IsSync(p)) {
     sync_pulse_us = p.delta_us;
     pulse_stream.push_back(p);
   } else if (p.delta_us * 4 > 3 * sync_pulse_us) {
     pulse_stream_done = true;
-  } else {
-    if (pulse_stream.size() > kMaxPulseLen) {
-      pulse_stream_done = true;
-    } else if (!pulse_stream.empty()) {
-      pulse_stream.push_back(p);
-    }
+  } else if (pulse_stream.size() > kMaxPulseLen) {
+    pulse_stream_done = true;
+  } else if (!pulse_stream.empty()) {
+    // Put pulses after sync in stream.
+    pulse_stream.push_back(p);
   }
-  if (pulse_stream_done && pulse_stream.size() > kMinPulseLen) {
-    pulse_stream_queue.push_back(std::move(pulse_stream));
+
+  if (pulse_stream_done) {
+    if (pulse_stream.size() >= kMinPulseLen) {
+      // A complete pulse stream to handle.
+      pulse_stream_queue.push_back(std::move(pulse_stream));
+    }
     pulse_stream_done = false;
-    // Need to reset as it was move:d above.
+    // Need to reset also when it was move:d above.
     pulse_stream.clear();
     if (IsSync(p)) {
       sync_pulse_us = p.delta_us;
-      pulse_stream.push_back(p);
+      pulse_stream.push_back(std::move(p));
     }
-  }
-  last_changed = now;
-}
-
-std::vector<Pulse> FilterGlitches(const std::vector<Pulse>& pulses) {
-  if (pulses.empty()) return pulses;
-  std::vector<Pulse> result;
-  result.reserve(pulses.size());
-  result.push_back(pulses.at(0));
-  for (int i = 1; i < pulses.size(); ++i) {
-    const Pulse p = pulses[i];
-    if (p.delta_us < kGlitchUs) {
-      Pulse& last = result.back();
-      last.delta_us += p.delta_us;
-      if (++i < pulses.size()) {
-        const Pulse next = pulses[i];
-        last.delta_us += next.delta_us;
-      }
-    } else {
-      result.push_back(p);
-    }
-  }
-  if (result.size() != pulses.size()) {
-#ifdef DEBUG_PRINT_PULSES
-    Serial.printf("Dropped %d pulses in glitch filter.\n", pulses.size()-result.size());
-#endif
-    return result;
-  } else {
-    return pulses;
   }
 }
 
