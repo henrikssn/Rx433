@@ -65,17 +65,17 @@ void ICACHE_RAM_ATTR rxISR() {
   static int last_state = 0;
   static std::vector<rx433::Pulse> pulse_stream;
   int now = micros();
-  int state = digitalRead(rxPin_);
-  int delta_us = now - last_changed;
+  // Need to invert as p represents state before transition.
+  Pulse p = {now, now - last_changed, digitalRead(rxPin_)};
 
   // Ignore very short glitches that we missed.
-  if (state == last_state) return;
-  last_state = state;
+  if (p.state == last_state) return;
+  last_state = p.state;
 
   // Streamed glich filter
   // Ignore any pulse (1 or 0) shorter than kGlitchUs.
-  if (!pulse_stream.empty() && delta_us < kGlitchUs) {
-    last_changed -= pulse_stream.back().delta_us;
+  if (!pulse_stream.empty() && p.delta_us < kGlitchUs) {
+    last_changed = pulse_stream.back().time_us;
     pulse_stream.pop_back();
     return;
   }
@@ -85,8 +85,6 @@ void ICACHE_RAM_ATTR rxISR() {
   if (pulse_stream_queue.size() > 10) return;
 
   // Create pulse
-  // Need to invert as p represents state before transition.
-  Pulse p = {now, delta_us, state};
 
   bool pulse_stream_done = false;
   if (pulse_stream.empty() && IsSync(p)) {
@@ -111,7 +109,7 @@ void ICACHE_RAM_ATTR rxISR() {
     pulse_stream.clear();
     if (IsSync(p)) {
       sync_pulse_us = p.delta_us;
-      pulse_stream.push_back(std::move(p));
+      pulse_stream.push_back(p);
     }
   }
 }
