@@ -6,6 +6,10 @@
 namespace rx433 {
 namespace {
   using namespace rx433_internal;
+
+  static int rx_pin_;
+  static std::vector<rx433::Handler*> handlers;
+  static std::list<std::vector<rx433::Pulse>> pulse_stream_queue;
 }
 
 bool Pulse::operator==(const Pulse& other) const {
@@ -19,7 +23,7 @@ void AddHandler(Handler* handler) {
 }
 
 void Setup(int rxPin) {
-  rxPin_ = rxPin;
+  rx_pin_ = rxPin;
   attachInterrupt(rxPin, rxISR, CHANGE);
 }
 
@@ -67,7 +71,8 @@ bool Handle(std::vector<Pulse> buf) {
 }
 
 void ICACHE_RAM_ATTR rxISR() {
-  static int last_changed = 0, sync_pulse_us = 0;
+  static int last_changed = 0;
+  static uint32_t sync_pulse_us = 0;
   static std::vector<rx433::Pulse> pulse_stream;
   bool pulse_stream_done = false;
   if (pulse_stream_queue.size() > 10) return;
@@ -75,13 +80,8 @@ void ICACHE_RAM_ATTR rxISR() {
   // Need to invert as p represents state before transition.
   Pulse p = {static_cast<uint32_t>(now),
              static_cast<uint32_t>(now-last_changed),
-             static_cast<bool>(digitalRead(rxPin_))};
+             static_cast<bool>(digitalRead(rx_pin_))};
   if (pulse_stream.empty() && IsSync(p)) {
-    // if (now - last_sync_us > 10000) {
-    //   // Wait for next message.
-    //   last_sync_us = now;
-    //   return;
-    // }
     sync_pulse_us = p.delta_us;
     pulse_stream.push_back(p);
   } else if (p.delta_us * 4 > 3 * sync_pulse_us) {
@@ -111,7 +111,7 @@ std::vector<Pulse> FilterGlitches(const std::vector<Pulse>& pulses) {
   std::vector<Pulse> result;
   result.reserve(pulses.size());
   result.push_back(pulses.at(0));
-  for (int i = 1; i < pulses.size(); ++i) {
+  for (unsigned int i = 1; i < pulses.size(); ++i) {
     const Pulse p = pulses[i];
     if (p.delta_us < kGlitchUs) {
       Pulse& last = result.back();
@@ -136,6 +136,3 @@ std::vector<Pulse> FilterGlitches(const std::vector<Pulse>& pulses) {
 
 } // namespace rx433_internal
 
-namespace {
-  using namespace rx433_internal;
-}

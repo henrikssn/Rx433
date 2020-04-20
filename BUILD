@@ -4,12 +4,16 @@ cc_library(
   hdrs = ["Rx433.h"],
   #deps = ["@arduino-mock//:arduino-mock"],
   deps = ["//test-helpers"],
-  includes = ["test-helpers"]
+  includes = ["test-helpers"],
 )
 
 cc_test(
   name = "Rx433_test",
   srcs = ["Rx433_test.cc"],
-  deps = [":Rx433"])
+  deps = [
+      ":Rx433",
+      "@googletest//:gtest_main",
+  ],
+)
 
 
