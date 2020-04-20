@@ -75,7 +75,7 @@ void ICACHE_RAM_ATTR rxISR() {
   // Streamed glich filter
   // Ignore any pulse (1 or 0) shorter than kGlitchUs.
   if (!pulse_stream.empty() && p.delta_us < kGlitchUs) {
-    last_changed = pulse_stream.back().time_us;
+    last_changed -= pulse_stream.back().delta_us;
     pulse_stream.pop_back();
     return;
   }
