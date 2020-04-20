@@ -1,7 +1,15 @@
 cc_library(
   name = "Rx433",
-  srcs = ["Rx433.cpp"],
-  hdrs = ["Rx433.h"],
+  srcs = [
+      "bresser_3ch.cpp",
+      "Rx433.cpp",
+  ],
+  hdrs = [
+      "bresser_3ch.h",
+      "handler.h",
+      "pulse.h",
+      "Rx433.h",
+  ],
   #deps = ["@arduino-mock//:arduino-mock"],
   deps = ["//test-helpers"],
   includes = ["test-helpers"],

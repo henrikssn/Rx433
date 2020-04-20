@@ -7,7 +7,6 @@
 #include <vector>
 
 namespace {
-using namespace arduino_test;
 using namespace rx433;
 using namespace testing;
 } // namespace

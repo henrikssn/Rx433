@@ -12,12 +12,6 @@ namespace {
   static std::list<std::vector<rx433::Pulse>> pulse_stream_queue;
 }
 
-bool Pulse::operator==(const Pulse& other) const {
-  return time_us == other.time_us
-      && delta_us == other.delta_us
-      && state == other.state;
-}
-
 void AddHandler(Handler* handler) {
   handlers.push_back(handler);
 }
