@@ -1,3 +1,9 @@
+/*
+ * Some code here is borrowed from arduino-mock which is licensed under MIT.
+ *
+ * Copyright (c) 2014, Yasuki Ikeuchi <ikeyasu@gmail.com>
+ * Copyright (c) 2013, Anders Arnholm <Anders@Arnholm.se>
+ */
 #ifndef SERIAL_H
 #define SERIAL_H
 
