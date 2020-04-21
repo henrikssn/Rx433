@@ -16,11 +16,10 @@ void AddHandler(Handler* handler) {
   handlers.push_back(handler);
 }
 
-void Setup(int rxPin) {
-  pinMode(rxPin, INPUT);
-  rx_pin_ = rxPin;
-  rxPin_ = rxPin;
-  attachInterrupt(rxPin, rxISR, CHANGE);
+void Setup(int rx_pin) {
+  pinMode(rx_pin, INPUT);
+  rx_pin_ = rx_pin;
+  attachInterrupt(rx_pin, rxISR, CHANGE);
 }
 
 void Loop() {
@@ -72,7 +71,7 @@ void ICACHE_RAM_ATTR rxISR() {
   static std::vector<rx433::Pulse> pulse_stream;
   uint32_t now = static_cast<uint32_t>(micros());
   // Need to invert as p represents state before transition.
-  Pulse p = {now, now - last_changed, static_cast<bool>(digitalRead(rxPin_))};
+  Pulse p = {now, now - last_changed, static_cast<bool>(digitalRead(rx_pin_))};
 
   // Ignore very short glitches that we missed.
   if (p.state == last_state) return;

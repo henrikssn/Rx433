@@ -18,6 +18,10 @@
 #define FALLING 2
 #define RISING 3
 
+#define INPUT 0x0
+#define OUTPUT 0x1
+#define INPUT_PULLUP 0x2
+
 void cli();
 void sei();
 
