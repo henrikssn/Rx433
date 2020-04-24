@@ -6,16 +6,20 @@
 namespace rx433 {
 namespace {
   using namespace rx433_internal;
+
+  static int rx_pin_;
+  static std::vector<rx433::Handler*> handlers;
+  static std::list<std::vector<rx433::Pulse>> pulse_stream_queue;
 }
 
 void AddHandler(Handler* handler) {
   handlers.push_back(handler);
 }
 
-void Setup(int rxPin) {
-  rxPin_ = rxPin;
-  pinMode(rxPin, INPUT);
-  attachInterrupt(rxPin, rxISR, CHANGE);
+void Setup(int rx_pin) {
+  pinMode(rx_pin, INPUT);
+  rx_pin_ = rx_pin;
+  attachInterrupt(rx_pin, rxISR, CHANGE);
 }
 
 void Loop() {
@@ -61,12 +65,13 @@ bool Handle(std::vector<Pulse> buf) {
 }
 
 void ICACHE_RAM_ATTR rxISR() {
-  static int last_changed = 0, sync_pulse_us = 0;
-  static int last_state = 0;
+  static uint32_t last_changed = 0;
+  static uint32_t sync_pulse_us = 0;
+  static bool last_state = 0;
   static std::vector<rx433::Pulse> pulse_stream;
-  int now = micros();
+  uint32_t now = static_cast<uint32_t>(micros());
   // Need to invert as p represents state before transition.
-  Pulse p = {now, now - last_changed, digitalRead(rxPin_)};
+  Pulse p = {now, now - last_changed, static_cast<bool>(digitalRead(rx_pin_))};
 
   // Ignore very short glitches that we missed.
   if (p.state == last_state) return;
@@ -116,6 +121,3 @@ void ICACHE_RAM_ATTR rxISR() {
 
 } // namespace rx433_internal
 
-namespace {
-  using namespace rx433_internal;
-}
