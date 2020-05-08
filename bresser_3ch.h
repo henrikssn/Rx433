@@ -1,24 +1,36 @@
 #ifndef Bresser3ch_h
 #define Bresser3ch_h
 
-#include <PubSubClient.h>
-
 #include "handler.h"
 #include "pulse.h"
-
-#define PULSE_LEN_US 500
 
 namespace rx433 {
 
 class Bresser3chHandler : public Handler {
  public:
-  Bresser3chHandler(PubSubClient* client, const char* topic) : mqtt_client_(client), sensor_topic_(topic) {}
   bool IsSync(const Pulse& p) override;
   bool Handle(const std::vector<Pulse>& buf) override;
+
+  struct Message {
+    uint8_t address, channel;
+    float temperature_c;
+    uint8_t humidity;
+    bool battery_ok;
+
+    bool operator==(const Message other) {
+      return address == other.address
+        && channel == other.channel
+        && temperature_c == other.temperature_c
+        && humidity == other.humidity
+        && battery_ok == other.battery_ok;
+    }
+  };
+
+  void RegisterListener(std::function<void(const Message&)>);
+  
  private:
   const int pulse_len_us_ = 500;
-  const char* sensor_topic_;
-  PubSubClient* mqtt_client_;
+  std::vector<std::function<void(const Message&)>> listeners;
 };
 
 } // namespace rx433
