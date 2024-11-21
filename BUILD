@@ -10,7 +10,6 @@ cc_library(
       "pulse.h",
       "Rx433.h",
   ],
-  #deps = ["@arduino-mock//:arduino-mock"],
   deps = ["//test-helpers"],
   includes = ["test-helpers"],
 )
