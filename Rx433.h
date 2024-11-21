@@ -36,10 +36,6 @@ using namespace rx433;
 constexpr int kMinPulseLen = 50;
 constexpr int kMaxPulseLen = 200;
 constexpr int kGlitchUs = 200;
-static int rxPin_ = 0;
-
-static std::vector<rx433::Handler*> handlers;
-static std::list<std::vector<rx433::Pulse>> pulse_stream_queue;
 
 void rxISR();
 bool IsSync(const Pulse&);

@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+  name = "arduino-mock",
+  srcs = glob(["src/*.cc"], exclude = ["src/ArduinoMockAll.cc"]),
+  hdrs = glob(["include/*.h"]),
+  includes = ["include"],
+  deps = [
+    "@googletest//:gtest",
+    "@googlemock//:gmock",
+  ],
+)

@@ -1,0 +1,24 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "gmock",
+    srcs = glob(
+        include = [
+            "src/*.cc",
+            "include/gmock/**/*.h",
+        ],
+        exclude = [
+            "src/gmock-all.cc",
+            "src/gmock_main.cc",
+        ],
+    ),
+    hdrs = glob([
+        "include/gmock/*.h",
+    ]),
+    copts = ["-pthread"],
+    includes = [
+        "include",
+    ],
+    deps = ["@googletest//:gtest"],
+)
+
